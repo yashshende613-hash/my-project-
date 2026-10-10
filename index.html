@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpendWise — Personal Budget & Expense Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="auth-screen">
+  <div class="auth-art">
+    <div class="brand-mark"><span class="coin">₹</span> SpendWise</div>
+    <div>
+      <h1 class="headline">Every rupee, <em>accounted for.</em></h1>
+      <p class="auth-quote" style="margin-top:14px;">Personal budgets and shared group expenses in one ledger — with the analytics to show where it actually goes.</p>
+      <div class="ledger-figures">
+        <div><div class="num mono">₹0</div><div class="lbl">Untracked spend</div></div>
+        <div><div class="num mono">3</div><div class="lbl">Chart types</div></div>
+        <div><div class="num mono">100%</div><div class="lbl">Automated math</div></div>
+      </div>
+    </div>
+    <p class="auth-quote">G H Raisoni University, Amravati — Dept. of Computer Science &amp; Engineering. Project Seminar, Session 2026–27.</p>
+  </div>
+
+  <div class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-user" onclick="showAuthTab('user')">User</button>
+        <button class="auth-tab" id="tab-admin" onclick="showAuthTab('admin')">Admin</button>
+      </div>
+
+      <!-- USER LOGIN / REGISTER -->
+      <div id="user-auth-block">
+        <!-- LOGIN -->
+        <div id="login-form">
+          <h2>Welcome back</h2>
+          <p class="auth-sub">Log in to your SpendWise account.</p>
+          <div class="auth-error" id="login-error"></div>
+          <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+          <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+          <button class="btn-primary" onclick="handleLogin()">Log In</button>
+          <div class="auth-switch">New here? <button onclick="showAuth('register')">Create an account</button></div>
+          <div class="auth-hint">Demo account preloaded — <strong>demo@spendwise.app</strong> / <strong>demo1234</strong></div>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="register-form" style="display:none;">
+          <h2>Create account</h2>
+          <p class="auth-sub">Start tracking in under a minute.</p>
+          <div class="auth-error" id="register-error"></div>
+          <div class="field"><label>Full name</label><input type="text" id="reg-name" placeholder="Your name"></div>
+          <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
+          <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="Minimum 6 characters"></div>
+          <button class="btn-primary" onclick="handleRegister()">Register</button>
+          <div class="auth-switch">Already have an account? <button onclick="showAuth('login')">Log in</button></div>
+        </div>
+      </div>
+
+      <!-- ADMIN LOGIN -->
+      <div id="admin-login-form" style="display:none;">
+        <span class="admin-badge">🔒 Restricted access</span>
+        <h2>Admin sign-in</h2>
+        <p class="auth-sub">For SpendWise administrators only. Grants access to the Admin Panel.</p>
+        <div class="auth-error" id="admin-error"></div>
+        <div class="field"><label>Admin ID</label><input type="text" id="admin-id" placeholder="admin@spendwise.app"></div>
+        <div class="field"><label>Password</label><input type="password" id="admin-password" placeholder="••••••••"></div>
+        <button class="btn-primary" onclick="handleAdminLogin()" style="background:var(--ink-soft);">Log In as Admin</button>
+        <div class="auth-hint">Demo admin credentials — <strong>admin@spendwise.app</strong> / <strong>admin123</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ONBOARDING SCREEN (first login: attach bank) ============ -->
+<div id="onboard-screen">
+  <div class="onboard-art">
+    <div>
+      <div class="brand-mark"><span class="coin">₹</span> SpendWise</div>
+      <h1 class="headline">Let's get your <em>money moving</em> on autopilot.</h1>
+      <div class="onboard-step-track"><div class="dot on"></div><div class="dot"></div></div>
+    </div>
+    <div class="onboard-perks">
+      <div class="perk"><span class="ic">✓</span> Auto-detect income & expenses the moment they hit your account.</div>
+      <div class="perk"><span class="ic">✓</span> Rule-based category suggestions — you just confirm, not type.</div>
+      <div class="perk"><span class="ic">✓</span> Nothing changes your money — this is read-only tracking.</div>
+    </div>
+    <p class="auth-quote">You can always connect or disconnect a bank later from the Link Bank page.</p>
+  </div>
+
+  <div class="onboard-panel">
+    <div class="onboard-card" id="onboard-card-choose">
+      <h2>Attach a bank account</h2>
+      <p class="sub">Connect a bank so SpendWise can auto-detect your transactions and suggest categories for you. This is optional — you can always add entries manually instead.</p>
+      <div class="onboard-bank-grid" id="onboard-bank-grid"></div>
+      <div class="onboard-secure-note"><span>🔒</span><span>Demo simulation only — no real bank connection is made or credentials collected. A production build would use India's RBI-regulated Account Aggregator (AA) framework.</span></div>
+      <div class="onboard-skip"><button onclick="finishOnboarding(false)">Skip for now, I'll add entries manually</button></div>
+    </div>
+
+    <div class="onboard-card bank-detail-form" id="onboard-card-details" style="display:none;">
+      <div class="selected-bank-tag"><span class="bic" id="onboard-detail-bic">B</span> <span id="onboard-detail-bankname">Bank</span></div>
+      <h2>Account details</h2>
+      <p class="sub">Enter mock account details to simulate the connection — nothing is sent anywhere.</p>
+      <div class="field"><label>Account Holder Name</label><input type="text" id="onboard-acc-holder" placeholder="As per bank records"></div>
+      <div class="field"><label>Account Number</label><input type="text" id="onboard-acc-number" placeholder="e.g. 044501xxxxxx" inputmode="numeric"></div>
+      <div class="form-row">
+        <div class="field"><label>Account Type</label>
+          <select id="onboard-acc-type"><option>Savings</option><option>Current</option></select>
+        </div>
+        <div class="field"><label>Registered Mobile</label><input type="text" id="onboard-acc-mobile" placeholder="10-digit mobile" inputmode="numeric" maxlength="10"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-brass" onclick="onboardSubmitBankDetails()">Connect Securely</button>
+        <button class="btn-ghost" onclick="onboardBackToChoice()">Back</button>
+      </div>
+      <div class="onboard-secure-note"><span>🔒</span><span>Demo simulation only — details are never transmitted or stored outside this browser session.</span></div>
+    </div>
+
+    <div class="onboard-card" id="onboard-card-connected" style="display:none;">
+      <h2>You're all set</h2>
+      <p class="sub">Your account is connected. Full summary and auto-detected transactions are ready to review.</p>
+      <div class="onboard-connected">
+        <div class="row"><span class="dot-live"></span> <span id="onboard-connected-bank">—</span> connected</div>
+        <div class="sub2" id="onboard-connected-count">Scanning for recent transactions…</div>
+      </div>
+      <div id="onboard-summary-mini"></div>
+      <button class="btn-primary" onclick="finishOnboarding(true)">Continue to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SCREEN ============ -->
+<div id="app-screen">
+  <div class="shell">
+    <nav class="sidebar">
+      <div class="brand-mark"><span class="coin">₹</span> SpendWise</div>
+      <button class="nav-item active" data-page="dashboard" onclick="goPage('dashboard')"><span class="ic">◆</span> Dashboard</button>
+      <button class="nav-item" data-page="add-income" onclick="goPage('add-income')"><span class="ic">＋</span> Add Income</button>
+      <button class="nav-item" data-page="add-expense" onclick="goPage('add-expense')"><span class="ic">－</span> Add Expense</button>
+      <button class="nav-item" data-page="transactions" onclick="goPage('transactions')"><span class="ic">≡</span> Transactions</button>
+      <button class="nav-item" data-page="budgets" onclick="goPage('budgets')"><span class="ic">▣</span> Budgets</button>
+      <button class="nav-item" data-page="groups" onclick="goPage('groups')"><span class="ic">◎</span> Groups</button>
+      <button class="nav-item" data-page="linkbank" onclick="goPage('linkbank')"><span class="ic">⛁</span> Link Bank</button>
+      <button class="nav-item" data-page="analytics" onclick="goPage('analytics')"><span class="ic">◔</span> Analytics</button>
+      <button class="nav-item" data-page="reports" onclick="goPage('reports')"><span class="ic">▤</span> Reports</button>
+      <button class="nav-item" data-page="admin" onclick="goPage('admin')" id="nav-admin" style="display:none;"><span class="ic">⚙</span> Admin Panel</button>
+      <button class="nav-item" data-page="profile" onclick="goPage('profile')"><span class="ic">●</span> Profile</button>
+      <div class="nav-spacer"></div>
+      <div class="sidebar-foot">
+        <div class="user-chip">
+          <div class="avatar" id="side-avatar">D</div>
+          <div><div class="name" id="side-name">Demo User</div><div class="email" id="side-email">demo@spendwise.app</div></div>
+        </div>
+        <button class="nav-item" style="margin-top:8px;" onclick="handleLogout()"><span class="ic">⏻</span> Logout</button>
+      </div>
+    </nav>
+
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div><h1>Dashboard</h1><div class="sub">Your financial snapshot for <span id="dash-month-label"></span></div></div>
+        </div>
+        <div class="alerts-panel" id="dash-alerts"></div>
+        <div class="cards-row">
+          <div class="stat-card income"><div class="lbl">Total Income</div><div class="val mono" id="stat-income">₹0</div></div>
+          <div class="stat-card expense"><div class="lbl">Total Expenses</div><div class="val mono" id="stat-expense">₹0</div></div>
+          <div class="stat-card balance"><div class="lbl">Remaining Balance</div><div class="val mono" id="stat-balance">₹0</div></div>
+          <div class="stat-card"><div class="lbl">Monthly Savings</div><div class="val mono" id="stat-savings">₹0</div></div>
+          <div class="stat-card"><div class="lbl">Budget Utilization</div><div class="val mono" id="stat-util">0%</div>
+            <div class="bar-track"><div class="bar-fill" id="stat-util-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <h3>Spend by Category</h3>
+            <div class="chart-wrap"><canvas id="chart-dash-pie"></canvas></div>
+          </div>
+          <div class="panel">
+            <h3>Recent Transactions</h3>
+            <table id="dash-recent-table"><thead><tr><th>Date</th><th>Details</th><th style="text-align:right;">Amount</th></tr></thead><tbody></tbody></table>
+            <div style="margin-top:12px;"><a class="panel-foot-link" href="#" onclick="goPage('transactions');return false;">View all transactions →</a></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADD INCOME -->
+      <section class="page" id="page-add-income">
+        <div class="page-head"><div><h1>Add Income</h1><div class="sub">Log a new income entry.</div></div></div>
+        <div class="panel form-card">
+          <div class="form-row">
+            <div class="field"><label>Amount (₹)</label><input type="number" id="inc-amount" placeholder="0.00" min="0" step="0.01"></div>
+            <div class="field"><label>Date</label><input type="date" id="inc-date"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Source / Category</label>
+              <select id="inc-category">
+                <option>Salary</option><option>Freelance</option><option>Business</option><option>Investment</option><option>Gift</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Note (optional)</label><input type="text" id="inc-note" placeholder="e.g. July salary"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-brass" onclick="addIncome()">Save Income</button>
+            <button class="btn-ghost" onclick="clearIncomeForm()">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADD EXPENSE -->
+      <section class="page" id="page-add-expense">
+        <div class="page-head"><div><h1>Add Expense</h1><div class="sub">Log a new expense entry.</div></div></div>
+        <div class="panel form-card">
+          <div class="form-row">
+            <div class="field"><label>Amount (₹)</label><input type="number" id="exp-amount" placeholder="0.00" min="0" step="0.01"></div>
+            <div class="field"><label>Date</label><input type="date" id="exp-date"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Category</label>
+              <select id="exp-category">
+                <option>Food</option><option>Transport</option><option>Rent</option><option>Utilities</option><option>Shopping</option><option>Entertainment</option><option>Health</option><option>Education</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Note (optional)</label><input type="text" id="exp-note" placeholder="e.g. Groceries"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-brass" onclick="addExpense()">Save Expense</button>
+            <button class="btn-ghost" onclick="clearExpenseForm()">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRANSACTIONS -->
+      <section class="page" id="page-transactions">
+        <div class="page-head"><div><h1>Transaction History</h1><div class="sub">Search, filter and sort every entry.</div></div></div>
+        <div class="filters">
+          <input type="text" id="tx-search" placeholder="Search notes or category…" oninput="renderTransactions()">
+          <select id="tx-type-filter" onchange="renderTransactions()">
+            <option value="all">All types</option><option value="income">Income</option><option value="expense">Expense</option>
+          </select>
+          <select id="tx-sort" onchange="renderTransactions()">
+            <option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option>
+            <option value="amount-desc">Amount: high to low</option><option value="amount-asc">Amount: low to high</option>
+          </select>
+        </div>
+        <div class="panel">
+          <table id="tx-table"><thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th style="text-align:right;">Amount</th><th></th></tr></thead><tbody></tbody></table>
+          <div class="empty" id="tx-empty" style="display:none;">No transactions match your filters.</div>
+        </div>
+      </section>
+
+      <!-- BUDGETS -->
+      <section class="page" id="page-budgets">
+        <div class="page-head"><div><h1>Budget Management</h1><div class="sub">Set category-wise monthly limits and track overspend.</div></div></div>
+        <div class="alerts-panel" id="budget-page-alerts"></div>
+        <div class="grid-2">
+          <div class="panel">
+            <h3>This Month's Budgets</h3>
+            <div id="budget-list"></div>
+          </div>
+          <div class="panel" id="budget-form-panel">
+            <h3>Set / Update a Budget <span id="budget-editing-tag" style="display:none;font-size:11.5px;font-weight:700;color:var(--brass);"></span></h3>
+            <div class="field"><label>Category</label>
+              <select id="budget-category">
+                <option>Food</option><option>Transport</option><option>Rent</option><option>Utilities</option><option>Shopping</option><option>Entertainment</option><option>Health</option><option>Education</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Monthly Limit (₹)</label><input type="number" id="budget-amount" min="0" step="1" placeholder="e.g. 5000"></div>
+            <div class="btn-row">
+              <button class="btn-brass" onclick="setBudget()">Save Budget</button>
+              <button class="btn-ghost" id="budget-cancel-edit" style="display:none;" onclick="cancelBudgetEdit()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GROUPS (fair & transparent splitting) -->
+      <section class="page" id="page-groups">
+        <div class="page-head"><div><h1>Group Expenses</h1><div class="sub">Split bills fairly and settle up with minimal transfers.</div></div></div>
+        <div class="alerts-panel" id="group-page-alerts"></div>
+
+        <div class="panel">
+          <h3>Create a Group</h3>
+          <div class="form-row">
+            <div class="field"><label>Group Name</label><input type="text" id="grp-name" placeholder="e.g. Goa Trip"></div>
+            <div class="field"><label>Members (comma separated)</label><input type="text" id="grp-members" placeholder="e.g. You, Rohit, Yash, Ruchita"></div>
+          </div>
+          <button class="btn-brass" onclick="createGroup()">Create Group</button>
+        </div>
+
+        <div id="groups-list"></div>
+
+        <div class="panel form-card" style="max-width:100%;">
+          <h3>Add a Shared Expense</h3>
+          <div class="form-row">
+            <div class="field"><label>Group</label><select id="gexp-group"></select></div>
+            <div class="field"><label>Amount (₹)</label><input type="number" id="gexp-amount" min="0" step="0.01" placeholder="0.00"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Paid By</label><select id="gexp-payer"></select></div>
+            <div class="field"><label>Split</label>
+              <select id="gexp-split-type" onchange="toggleCustomSplit()">
+                <option value="equal">Equally among all members</option>
+                <option value="custom">Custom (enter shares)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>What for</label><input type="text" id="gexp-note" placeholder="e.g. Hotel booking"></div>
+          <div class="field" id="gexp-custom-wrap" style="display:none;">
+            <label>Custom shares (₹, comma separated, same order as members)</label>
+            <input type="text" id="gexp-custom-shares" placeholder="e.g. 2000, 1000, 1000, 1000">
+          </div>
+          <div class="btn-row">
+            <button class="btn-brass" onclick="addGroupExpense()">Add Shared Expense</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- LINK BANK (bank linking + auto-detect) -->
+      <section class="page" id="page-linkbank">
+        <div class="page-head"><div><h1>Link Bank Account</h1><div class="sub">Connect a bank to auto-detect transactions. Demo simulation — no real bank connection is made.</div></div></div>
+
+        <div id="acct-summary-wrap"></div>
+        <div id="bank-linked-strip-wrap"></div>
+
+        <div class="panel" id="bank-choose-panel">
+          <h3>Choose Your Bank</h3>
+          <div class="bank-grid" id="bank-grid"></div>
+        </div>
+
+        <div class="bank-detail-panel" id="bank-detail-panel" style="display:none;">
+          <div class="selected-bank-tag"><span class="bic" id="lb-detail-bic">B</span> <span id="lb-detail-bankname">Bank</span></div>
+          <h3>Account details</h3>
+          <p class="sub" style="margin-bottom:16px;">Enter mock account details to simulate the connection — nothing is sent anywhere.</p>
+          <div class="field"><label>Account Holder Name</label><input type="text" id="lb-acc-holder" placeholder="As per bank records"></div>
+          <div class="field"><label>Account Number</label><input type="text" id="lb-acc-number" placeholder="e.g. 044501xxxxxx" inputmode="numeric"></div>
+          <div class="form-row">
+            <div class="field"><label>Account Type</label>
+              <select id="lb-acc-type"><option>Savings</option><option>Current</option></select>
+            </div>
+            <div class="field"><label>Registered Mobile</label><input type="text" id="lb-acc-mobile" placeholder="10-digit mobile" inputmode="numeric" maxlength="10"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-brass" onclick="linkBankSubmit()">Connect Securely</button>
+            <button class="btn-ghost" onclick="cancelBankDetailForm()">Cancel</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <h3 style="margin:0;">Auto-Detected Transactions</h3>
+            <span class="sub" style="font-size:12px;">Rule-based category auto-suggestion — review before adding</span>
+          </div>
+          <div id="autodetect-list"></div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="page" id="page-analytics">
+        <div class="page-head"><div><h1>Financial Analytics</h1><div class="sub">Category breakdown, monthly comparison and trend.</div></div></div>
+        <div class="grid-2">
+          <div class="panel"><h3>Expense by Category (Pie)</h3><div class="chart-wrap"><canvas id="chart-pie"></canvas></div></div>
+          <div class="panel"><h3>Income vs Expense (Bar)</h3><div class="chart-wrap"><canvas id="chart-bar"></canvas></div></div>
+        </div>
+        <div class="panel"><h3>6-Month Spending Trend (Line)</h3><div class="chart-wrap"><canvas id="chart-line"></canvas></div></div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="page" id="page-reports">
+        <div class="page-head">
+          <div><h1>Monthly Report</h1><div class="sub">Auto-generated income/expense summary.</div></div>
+          <select id="report-month" onchange="renderReport()"></select>
+        </div>
+        <div class="cards-row" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card income"><div class="lbl">Income</div><div class="val mono" id="rep-income">₹0</div></div>
+          <div class="stat-card expense"><div class="lbl">Expenses</div><div class="val mono" id="rep-expense">₹0</div></div>
+          <div class="stat-card"><div class="lbl">Net Savings</div><div class="val mono" id="rep-savings">₹0</div></div>
+          <div class="stat-card"><div class="lbl">Transactions</div><div class="val mono" id="rep-count">0</div></div>
+        </div>
+        <div class="panel">
+          <h3>Category Breakdown</h3>
+          <table id="report-table"><thead><tr><th>Category</th><th>Type</th><th style="text-align:right;">Total</th></tr></thead><tbody></tbody></table>
+        </div>
+      </section>
+
+      <!-- ADMIN PANEL -->
+      <section class="page" id="page-admin">
+        <div class="page-head"><div><h1>Admin Panel</h1><div class="sub">Operational overview for SpendWise administrators.</div></div></div>
+
+        <div class="admin-banner">
+          <span>ℹ️</span>
+          <span><strong>Demo mode.</strong> This panel shows sample aggregated data (mock demo users) alongside your own account's real budget and group alerts, for illustration only. It does not collect government ID numbers and does not pull live bank, UPI, or card transaction feeds — the bank-linking flow elsewhere in SpendWise remains a simulation.</span>
+        </div>
+
+        <div class="cards-row" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card"><div class="lbl">Total Users</div><div class="val mono" id="admin-stat-users">0</div></div>
+          <div class="stat-card"><div class="lbl">Transactions Logged</div><div class="val mono" id="admin-stat-tx">0</div></div>
+          <div class="stat-card"><div class="lbl">Groups Created</div><div class="val mono" id="admin-stat-groups">0</div></div>
+          <div class="stat-card"><div class="lbl">Open Alerts</div><div class="val mono" id="admin-stat-alerts">0</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>System Alerts</h3>
+          <div id="admin-alerts"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel" style="grid-column:1/-1;">
+            <h3>Demo Users</h3>
+            <input type="text" class="admin-search" id="admin-search" placeholder="Search by name or email…" oninput="renderAdminUsers()">
+            <table id="admin-users-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Plan</th><th>Bank</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+              <tbody></tbody>
+            </table>
+            <div class="btn-row" style="margin-top:14px;">
+              <button class="btn-ghost" onclick="adminExportUsersCSV()">Export CSV</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Linked Bank Accounts</h3>
+            <div id="admin-banks-list"></div>
+          </div>
+          <div class="panel">
+            <h3>Admin Audit Log</h3>
+            <div id="admin-audit-log"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section class="page" id="page-profile">
+        <div class="page-head"><div><h1>Profile &amp; Settings</h1><div class="sub">Manage your account details.</div></div></div>
+        <div class="panel profile-grid">
+          <div class="field"><label>Full Name</label><input type="text" id="prof-name"></div>
+          <div class="field"><label>Email</label><input type="email" id="prof-email"></div>
+          <div class="field" style="grid-column:1/-1;"><label>Currency</label><input type="text" value="Indian Rupee (₹)" disabled></div>
+          <div style="grid-column:1/-1;" class="btn-row">
+            <button class="btn-brass" onclick="saveProfile()">Save Changes</button>
+            <button class="btn-ghost" onclick="handleLogout()">Log Out</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
