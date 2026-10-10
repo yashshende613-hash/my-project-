@@ -1,0 +1,13 @@
+{
+  "name": "spendwise-backend",
+  "version": "1.0.0",
+  "description": "SpendWise REST API (Node.js, zero dependencies, in-memory store)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
